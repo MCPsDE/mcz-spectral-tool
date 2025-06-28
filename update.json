@@ -1,7 +1,7 @@
 {
     "version": "2.3.1",
     "release_date": "2025-06-28",
-    "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/raw/master/releases/app_v2.3.1.exe",
+    "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.3.1/MCZ合谱工具v2.3.1.exe",
     "changelog": [
         "新增自动更新功能",
         "优化用户界面"
