@@ -14,37 +14,33 @@ from packaging import version
 import requests
 #pyinstaller -F -w -i asd.ico --add-data "asd.ico;." 合谱工具GUI.py
 # 当前版本号 - 每次发布新版本时更新这个值
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = "2.3.1"
 import urllib
 # 资源路径处理函数
 # 检查更新函数
 def check_for_updates():
     """检查是否有新版本可用"""
     try:
-        # 从GitHub API获取最新版本信息
+        # 获取版本信息
         response = requests.get(
-            "https://gitee.com/mcpsde/mcz-spectral-tool/release/latest",
+            "https://gitee.com/mcpsde/mcz-spectral-tool/raw/master/update.json",
             timeout=5
         )
         response.raise_for_status()
-        release_info = response.json()
-        
-        # 提取最新版本号
-        latest_version = release_info["tag_name"].lstrip('v')
+        update_info = response.json()
         
         # 比较版本
-        if version.parse(latest_version) > version.parse(CURRENT_VERSION):
+        if version.parse(update_info["version"]) > version.parse(CURRENT_VERSION):
             return {
                 "available": True,
-                "version": latest_version,
-                "download_url": release_info["assets"][0]["browser_download_url"],
-                "release_notes": release_info["body"]
+                "version": update_info["version"],
+                "download_url": update_info["download_url"],
+                "release_notes": "\n".join(update_info["changelog"])
             }
     except Exception as e:
         print(f"检查更新失败: {str(e)}")
     
     return {"available": False}
-
 def show_update_dialog(update_info):
     """显示更新对话框"""
     dialog = tk.Toplevel(root)
@@ -115,205 +111,82 @@ def start_update(update_info, dialog):
     """开始更新过程"""
     dialog.destroy()
     
-    # 创建更新进度窗口
-    update_dialog = tk.Toplevel(root)
-    update_dialog.title("正在更新")
-    update_dialog.geometry("400x200")
-    update_dialog.transient(root)
-    update_dialog.grab_set()
-    
-    # 设置窗口图标
-    try:
-        update_dialog.iconbitmap(resource_path("asd.ico"))
-    except:
-        pass
-    
-    # 创建框架
-    frame = ttk.Frame(update_dialog, padding=20)
-    frame.pack(fill=tk.BOTH, expand=True)
-    
-    # 状态标签
-    status_label = ttk.Label(
-        frame, 
-        text="正在下载更新...",
-        font=("Arial", 10)
-    )
-    status_label.pack(pady=10)
-    
-    # 进度条
-    progress = ttk.Progressbar(frame, orient=tk.HORIZONTAL, length=300, mode='determinate')
-    progress.pack(pady=10)
-    
-    # 百分比标签
-    percent_label = ttk.Label(frame, text="0%")
-    percent_label.pack()
-    
-    # 按钮框架
-    btn_frame = ttk.Frame(frame)
-    btn_frame.pack(pady=10)
-    
-    cancel_btn = ttk.Button(btn_frame, text="取消", command=update_dialog.destroy)
-    cancel_btn.pack()
-    
-    # 在新线程中执行更新
-    threading.Thread(
-        target=perform_update, 
-        args=(update_info, status_label, progress, percent_label, update_dialog),
-        daemon=True
-    ).start()
-
-def perform_update(update_info, status_label, progress, percent_label, dialog):
-    """执行更新过程"""
     try:
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
-        zip_path = os.path.join(temp_dir, "update.zip")
+        new_exe_path = os.path.join(temp_dir, "new_version.exe")
         
-        # 下载更新
+        # 下载新版本
         response = requests.get(update_info["download_url"], stream=True)
         total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024  # 1 Kibibyte
+        block_size = 1024  # 1 KB
         downloaded = 0
         
-        with open(zip_path, 'wb') as f:
+        with open(new_exe_path, 'wb') as f:
             for data in response.iter_content(block_size):
                 f.write(data)
                 downloaded += len(data)
-                if total_size > 0:
-                    percent = int(downloaded * 100 / total_size)
-                    progress['value'] = percent
-                    percent_label.config(text=f"{percent}%")
-                    dialog.update()
+                # 可以在这里更新进度条，但单EXE没有界面，所以简单处理
         
-        # 更新状态
-        status_label.config(text="正在安装更新...")
-        progress['value'] = 0
-        percent_label.config(text="0%")
-        dialog.update()
+        # 创建重启脚本
+        create_restart_script(new_exe_path)
         
-        # 解压更新
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # 获取文件列表
-            file_list = zip_ref.namelist()
-            total_files = len(file_list)
-            
-            # 创建解压目录
-            extract_dir = os.path.join(temp_dir, "extracted")
-            os.makedirs(extract_dir, exist_ok=True)
-            
-            # 解压所有文件
-            for i, file in enumerate(file_list):
-                zip_ref.extract(file, extract_dir)
-                percent = int((i + 1) * 100 / total_files)
-                progress['value'] = percent
-                percent_label.config(text=f"{percent}%")
-                dialog.update()
+        # 重启应用
+        restart_application()
         
-        # 更新状态
-        status_label.config(text="正在替换文件...")
-        progress['value'] = 0
-        percent_label.config(text="0%")
-        dialog.update()
-        
-        # 确定当前应用程序的目录
-        if getattr(sys, 'frozen', False):
-            # 打包后的可执行文件所在目录
-            app_dir = os.path.dirname(sys.executable)
-        else:
-            # 开发环境中的脚本所在目录
-            app_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # 复制文件到应用程序目录
-        extracted_files = os.listdir(extract_dir)
-        total_files = len(extracted_files)
-        
-        for i, file in enumerate(extracted_files):
-            src = os.path.join(extract_dir, file)
-            dst = os.path.join(app_dir, file)
-            
-            # 如果是目录，创建它
-            if os.path.isdir(src):
-                shutil.copytree(src, dst, dirs_exist_ok=True)
-            else:
-                shutil.copy2(src, dst)
-            
-            percent = int((i + 1) * 100 / total_files)
-            progress['value'] = percent
-            percent_label.config(text=f"{percent}%")
-            dialog.update()
-        
-        # 更新完成
-        status_label.config(text="更新完成！请重启应用程序")
-        progress['value'] = 100
-        percent_label.config(text="100%")
-        
-        # 添加重启按钮
-        btn_frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=10)
-        
-        restart_btn = ttk.Button(
-            btn_frame, 
-            text="立即重启", 
-            command=lambda: restart_application(app_dir)
-        )
-        restart_btn.pack()
-        
-        # 关闭取消按钮
-        for widget in dialog.winfo_children():
-            if isinstance(widget, ttk.Button) and widget['text'] == "取消":
-                widget.destroy()
-    
     except Exception as e:
-        status_label.config(text=f"更新失败: {str(e)}")
-        progress['value'] = 0
-        percent_label.config(text="错误")
-        # 添加手动下载按钮
-        manual_btn = ttk.Button(
-            dialog, 
-            text="手动下载", 
-            command=lambda: webbrowser.open(update_info["download_url"])
-        )
-        manual_btn.pack(pady=10)
+        messagebox.showerror("更新失败", f"更新过程中出错: {str(e)}")
+        # 提供手动下载选项
+        if messagebox.askyesno("更新失败", "是否手动下载新版本？"):
+            webbrowser.open(update_info["download_url"])
 
-def restart_application(app_dir):
-    """重启应用程序"""
-    # 获取当前可执行文件路径
-    executable = sys.executable
+def create_restart_script(new_exe_path):
+    """创建重启脚本"""
+    # 获取当前应用路径
+    current_exe = sys.executable
+    app_dir = os.path.dirname(current_exe)
     
-    # 如果是打包后的应用
-    if getattr(sys, 'frozen', False):
-        # 在Windows上
-        if sys.platform == 'win32':
-            # 使用批处理文件重启
-            bat_path = os.path.join(app_dir, "restart.bat")
-            with open(bat_path, 'w') as f:
-                f.write(f"@echo off\n")
-                f.write(f"timeout /t 1 /nobreak >nul\n")
-                f.write(f'start "" "{executable}"\n')
-                f.write(f"del \"%~f0\"\n")
-            
-            # 启动批处理文件
-            subprocess.Popen(
-                ['cmd', '/c', bat_path],
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
+    # 创建批处理文件
+    bat_path = os.path.join(app_dir, "restart.bat")
+    
+    with open(bat_path, 'w') as f:
+        f.write("@echo off\n")
+        f.write("timeout /t 1 /nobreak >nul\n")
+        f.write(f'copy /Y "{new_exe_path}" "{current_exe}"\n')
+        f.write(f'start "" "{current_exe}"\n')
+        f.write("del \"%~f0\"\n")  # 删除自身
+    
+    return bat_path
+
+def restart_application():
+    """重启应用程序"""
+    # 获取当前应用目录
+    app_dir = os.path.dirname(sys.executable)
+    bat_path = os.path.join(app_dir, "restart.bat")
+    
+    # 启动批处理文件
+    subprocess.Popen(
+        ['cmd', '/c', bat_path],
+        creationflags=subprocess.CREATE_NO_WINDOW
+    )
     
     # 退出当前应用
-    root.quit()
-    root.destroy()
+    sys.exit(0)
 
-# 在应用程序启动时检查更新
 def check_updates_on_start():
     """应用程序启动时检查更新"""
     # 延迟检查，让主界面先显示
-    root.after(2000, lambda: threading.Thread(target=check_and_show_updates, daemon=True).start())
+    threading.Thread(target=check_and_show_updates, daemon=True).start()
 
 def check_and_show_updates():
     """检查并显示更新"""
-    update_info = check_for_updates()
-    if update_info["available"]:
-        # 在主线程中显示更新对话框
-        root.after(0, lambda: show_update_dialog(update_info))
+    try:
+        update_info = check_for_updates()
+        if update_info["available"]:
+            # 在主线程中显示更新对话框
+            root.after(0, lambda: show_update_dialog(update_info))
+    except Exception as e:
+        print(f"更新检查失败: {str(e)}")
 def resource_path(relative_path):
     """获取资源的绝对路径，支持开发环境和PyInstaller打包环境"""
     try:
@@ -621,12 +494,9 @@ default_font = ("Microsoft YaHei", 10)  # 或使用 "Segoe UI" 在Windows上
 root.option_add("*Font", default_font)
 # 设置现代主题
 style = ttk.Style()
-# 尝试使用更现代的主题
-for theme in ['vista']:
-    if theme in style.theme_names():
-        style.theme_use(theme)
-        break
-root.title("MCZ合谱工具@CrinoBaka")
+style.theme_use("vista")
+
+root.title(f"MCZ合谱工具v{CURRENT_VERSION}@CrinoBaka")
 root.geometry("900x750")
 try:
     root.iconbitmap(resource_path("asd.ico"))
