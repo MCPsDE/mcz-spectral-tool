@@ -1,4 +1,4 @@
-# MCZ合谱工具
+# MCZ合谱工具（更新比gitee慢一个版本）
 
 #### 介绍
 使用python和tkinter编写并由pyinstaller打包，用于MalodyV游戏中谱面的剪辑拼接合成，有bug可以提issue，欢迎对代码提出建议。
