@@ -1,12 +1,10 @@
 {
-  "version": "2.3.2",
-  "release_date": "2025-06-28",
-  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.3.1/mcz-spectral-toolv2.3.1.exe",
-  "file_size": 15298297,
-  "sha256": "cfbfd5c98029f898a7e1340ade0d2b972fce7913dd4a7bdfba97bd6abc2a9fa9",
+  "version": "2.4.1",
+  "release_date": "2025-07-16",
+  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.4.1/mcz-spectral-toolv2.4.1.exe",
+  "file_size": 15300172,
+  "sha256": "4f1257c080921c6bef139a3447982bcaf204606ce69a4b8124f640521fe71570",
   "changelog": [
-    "新增自动更新功能",
-    "优化用户界面",
     "修复已知问题"
   ]
 }
