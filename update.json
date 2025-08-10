@@ -1,10 +1,10 @@
 {
-  "version": "2.4.1",
-  "release_date": "2025-07-16",
-  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.4.1/mcz-spectral-toolv2.4.1.exe",
-  "file_size": 15300172,
-  "sha256": "4f1257c080921c6bef139a3447982bcaf204606ce69a4b8124f640521fe71570",
+  "version": "2.4.2",
+  "release_date": "2025-08-10",
+  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.4.2/mcz-spectral-toolv2.4.2.exe",
+  "file_size": 15299342,
+  "sha256": "dbe3f2d7e488d865231e4612e2935f563f9ddc617f79b0f007615df7392165bf",
   "changelog": [
-    "修复已知问题"
+    "修复2.4.1版本中，即使取消勾选重新生成音频按钮，依旧会进行音频拼接的逻辑错误"
   ]
 }
