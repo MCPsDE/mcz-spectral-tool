@@ -17,12 +17,12 @@ import requests
 #pyinstaller -F -w -i asd.ico --add-data "asd.ico;." 合谱工具GUI.py
 # 打包新版本
 '''
-pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.4.1.exe"
+pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.4.2.exe"
 
 # 生成更新信息
 python generate_update_info.py'''
 # 当前版本号 - 每次发布新版本时更新这个值
-CURRENT_VERSION = "2.4.1"
+CURRENT_VERSION = "2.4.2"
 import urllib
 # 资源路径处理函数
 # 配置日志
@@ -546,22 +546,35 @@ def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleo
     for i in range(0, len(blist)):
         effect.append({
             "beat": [blist[i], 0, 1],
-            "scroll": 180.0 / params_list[i]["bpm"]*float(scrollspeed)
+            "scroll": float(scrollspeed) / params_list[i]["bpm"]
         })
     
     # 处理音频
     process_list.insert(tk.END, "正在生成混合音频...\n")
     process_list.update_idletasks()
+    audio_output_path = f"output/mix_{version}.ogg"
+
+    # 检查输出目录是否存在
     if not os.path.exists("./output"):
         os.makedirs("./output")
-    if os.path.exists(f"mix_{version}.ogg"):
+
+    # 只有当需要重新生成或文件不存在时才生成音频
+    if re_gen or not os.path.exists(audio_output_path):
+        # 如果文件存在且需要重新生成，先删除
+        if os.path.exists(audio_output_path) and re_gen:
+            os.remove(audio_output_path)
+            update_process_list(f"删除旧音频文件: mix_{version}.ogg\n")
+        
+        # 生成新音频
+        outputmixogg(audio_paths, params_list, rest, audio_output_path)
+        
+        # 更新日志
         if re_gen:
-            os.remove(f"mix_{version}.ogg")
-            outputmixogg(audio_paths, params_list, rest, f"output/mix_{version}.ogg")
-            process_list.insert(tk.END, f"已重新生成混合音频文件: mix_{version}.ogg\n")
+            update_process_list(f"已重新生成混合音频文件: mix_{version}.ogg\n")
+        else:
+            update_process_list(f"已生成混合音频文件: mix_{version}.ogg\n")
     else:
-        outputmixogg(audio_paths, params_list, rest, f"output/mix_{version}.ogg")
-        process_list.insert(tk.END, f"已生成混合音频文件: mix_{version}.ogg\n")
+        update_process_list(f"使用现有音频文件: mix_{version}.ogg\n")
     
     # 创建混合JSON
     update_process_list("正在创建谱面文件...\n")
@@ -758,7 +771,7 @@ ttk.Entry(param_frame, textvariable=rest_var, width=10).grid(row=0, column=1, st
 ttk.Label(param_frame, text="间隔小节:").grid(row=0, column=2, sticky=tk.W, pady=5, padx=(20,0))
 ttk.Entry(param_frame, textvariable=beatrest_var, width=10).grid(row=0, column=3, sticky=tk.W, padx=5)
 
-ttk.Label(param_frame, text="基础流速(与const比值):").grid(row=1, column=0, sticky=tk.W, pady=5)
+ttk.Label(param_frame, text="BPM值:").grid(row=1, column=0, sticky=tk.W, pady=5)
 ttk.Entry(param_frame, textvariable=scrollspeed_var, width=10).grid(row=1, column=1, sticky=tk.W, padx=5)
 
 ttk.Checkbutton(param_frame, text="重新生成音频文件", variable=re_gen_var).grid(
