@@ -17,12 +17,12 @@ import requests
 #pyinstaller -F -w -i asd.ico --add-data "asd.ico;." 合谱工具GUI.py
 # 打包新版本
 '''
-pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.4.2.exe"
+pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.5.0.exe"
 
 # 生成更新信息
 python generate_update_info.py'''
 # 当前版本号 - 每次发布新版本时更新这个值
-CURRENT_VERSION = "2.4.2"
+CURRENT_VERSION = "2.5.0"
 import urllib
 # 资源路径处理函数
 # 配置日志
@@ -453,6 +453,7 @@ def process_files():
     version=version_entry.get()
     editor=editor_entry.get()
     scrollspeed=scrollspeed_var.get()
+    column=column_var.get()
     
     if not title or not artist:
         messagebox.showerror("错误", "歌曲标题和艺术家不能为空")
@@ -476,11 +477,11 @@ def process_files():
     process_btn.config(state=tk.DISABLED)
     
     # 在新线程中处理文件
-    threading.Thread(target=process_files_thread, args=(rest, beatrest, re_gen, title, artist, directory,titleorgv,artistorgv,version,editor,scrollspeed)).start()
+    threading.Thread(target=process_files_thread, args=(rest, beatrest, re_gen, title, artist, directory,titleorgv,artistorgv,version,editor,scrollspeed,column)).start()
 def transform_list(input_list):
     return [sublist[0] if sublist else {} for sublist in input_list]
 
-def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleorgv,artistorgv,version,editor,scrollspeed):
+def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleorgv,artistorgv,version,editor,scrollspeed,column):
     os.chdir(directory)
     mc_paths = getFileName(".")
     audio_paths = []
@@ -559,20 +560,12 @@ def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleo
         os.makedirs("./output")
 
     # 只有当需要重新生成或文件不存在时才生成音频
-    if re_gen or not os.path.exists(audio_output_path):
-        # 如果文件存在且需要重新生成，先删除
+    if re_gen:
         if os.path.exists(audio_output_path) and re_gen:
             os.remove(audio_output_path)
             update_process_list(f"删除旧音频文件: mix_{version}.ogg\n")
-        
-        # 生成新音频
         outputmixogg(audio_paths, params_list, rest, audio_output_path)
-        
-        # 更新日志
-        if re_gen:
-            update_process_list(f"已重新生成混合音频文件: mix_{version}.ogg\n")
-        else:
-            update_process_list(f"已生成混合音频文件: mix_{version}.ogg\n")
+        update_process_list(f"已生成混合音频文件: mix_{version}.ogg\n")
     else:
         update_process_list(f"使用现有音频文件: mix_{version}.ogg\n")
     
@@ -595,7 +588,7 @@ def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleo
                 "bpm": max([i["bpm"] for i in params_list])
             },
             "mode_ext": {
-                "column": 4,
+                "column": column,
                 "bar_begin": 0
             },
             "aimode": ""
@@ -738,7 +731,7 @@ if not check_ffmpeg():
 # 创建变量
 rest_var = tk.StringVar(value="5000")
 beatrest_var = tk.StringVar(value="1")
-scrollspeed_var = tk.StringVar(value="1")
+scrollspeed_var = tk.StringVar(value="180")
 re_gen_var = tk.BooleanVar(value=True)
 directory_var = tk.StringVar(value=os.getcwd())
 title_var = tk.StringVar()
@@ -746,7 +739,8 @@ artist_var = tk.StringVar()
 titleorg_var = tk.StringVar(value="MixTool")
 artistorg_var = tk.StringVar(value="Various Artists")
 version_var = tk.StringVar(value="4K - CrinoBaka Lv.999")
-editor_var = tk.StringVar(value="CrinoBaka")
+editor_var = tk.StringVar(value="CrinoBaka&MCPsDEPE(此处填写谱师与鸣谢信息)")
+column_var =tk.StringVar(value="4")
 
 # 创建界面控件
 frame = ttk.Frame(root, padding="10")
@@ -770,11 +764,13 @@ ttk.Entry(param_frame, textvariable=rest_var, width=10).grid(row=0, column=1, st
 
 ttk.Label(param_frame, text="间隔小节:").grid(row=0, column=2, sticky=tk.W, pady=5, padx=(20,0))
 ttk.Entry(param_frame, textvariable=beatrest_var, width=10).grid(row=0, column=3, sticky=tk.W, padx=5)
+ttk.Label(param_frame, text="轨道数量:").grid(row=0, column=4, sticky=tk.W, pady=5, padx=(20,0))
+ttk.Entry(param_frame, textvariable=column_var, width=10).grid(row=0, column=5, sticky=tk.W, padx=5)
 
 ttk.Label(param_frame, text="BPM值:").grid(row=1, column=0, sticky=tk.W, pady=5)
 ttk.Entry(param_frame, textvariable=scrollspeed_var, width=10).grid(row=1, column=1, sticky=tk.W, padx=5)
 
-ttk.Checkbutton(param_frame, text="重新生成音频文件", variable=re_gen_var).grid(
+ttk.Checkbutton(param_frame, text="生成音频文件", variable=re_gen_var).grid(
     row=1, column=2, sticky=tk.W, padx=(20,0))
 
 # 歌曲信息部分
