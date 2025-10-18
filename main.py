@@ -17,12 +17,12 @@ import requests
 #pyinstaller -F -w -i asd.ico --add-data "asd.ico;." 合谱工具GUI.py
 # 打包新版本
 '''
-pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.5.0.exe"
+pyinstaller -F -w -i asd.ico  main.py -n "mcz-spectral-toolv2.5.1.exe"
 
 # 生成更新信息
 python generate_update_info.py'''
 # 当前版本号 - 每次发布新版本时更新这个值
-CURRENT_VERSION = "2.5.0"
+CURRENT_VERSION = "2.5.1"
 import urllib
 # 资源路径处理函数
 # 配置日志
@@ -523,6 +523,7 @@ def process_files_thread(rest, beatrest, re_gen, title, artist, directory,titleo
         })
         b1 = b + last_beat
         blist.append(b)
+        [i["delay"]==0.0 for i in data["time"] if (i["beat"][0] != data["time"][0]["beat"][0] and "delay" not in i)]#2025年10月18日修复重要bug
         newtime.append([{
             "beat": [b, 0, 1],
             "bpm": data["time"][0]["bpm"],
