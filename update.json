@@ -1,10 +1,10 @@
 {
-  "version": "2.5.1",
+  "version": "2.5.2",
   "release_date": "2025-10-18",
-  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.5.1/mcz-spectral-toolv2.5.1.exe",
-  "file_size": 15554470,
-  "sha256": "de6ac5ab205eea261e9e1e6143cdc9799891ac35732272cd3fb80324ce0729ce",
+  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.5.2/mcz-spectral-toolv2.5.2.exe",
+  "file_size": 15554150,
+  "sha256": "5100a6d49b76be57ad3a14f86a9c3187b48f29652225cba88921671a76feeaca",
   "changelog": [
-    "[i[\"delay\"]==0.0 for i in data[\"time\"] if (i[\"beat\"][0] != data[\"time\"][0][\"beat\"][0] and \"delay\" not in i)]#2025年10月18日修复重要bug"
+    "#2025年10月18日修复重要bug"
   ]
 }
