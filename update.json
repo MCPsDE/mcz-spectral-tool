@@ -1,10 +1,10 @@
 {
-  "version": "2.5.0",
-  "release_date": "2025-08-20",
-  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.5.0/mcz-spectral-toolv2.5.0.exe",
-  "file_size": 15299986,
-  "sha256": "5cb76743b1052fdca3eff863a647df21a650cb84a1a92c8a89b6e5388254430b",
+  "version": "2.5.1",
+  "release_date": "2025-10-18",
+  "download_url": "https://gitee.com/mcpsde/mcz-spectral-tool/releases/download/v2.5.1/mcz-spectral-toolv2.5.1.exe",
+  "file_size": 15554470,
+  "sha256": "de6ac5ab205eea261e9e1e6143cdc9799891ac35732272cd3fb80324ce0729ce",
   "changelog": [
-    "新增设置轨道数量的功能"
+    "[i[\"delay\"]==0.0 for i in data[\"time\"] if (i[\"beat\"][0] != data[\"time\"][0][\"beat\"][0] and \"delay\" not in i)]#2025年10月18日修复重要bug"
   ]
 }
